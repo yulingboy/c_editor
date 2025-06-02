@@ -83,6 +83,24 @@ onMounted(async () => {
           }
         }
       })
+      
+      // 监听模型变化以获取错误信息
+      const model = editor.getModel()
+      if (model) {
+        // 监听标记变化
+        monacoInstance.editor.onDidChangeMarkers((uris: any[]) => {
+          uris.forEach((uri: any) => {
+            if (model.uri.toString() === uri.toString()) {
+              const markers = monacoInstance.editor.getModelMarkers({ resource: uri })
+              const errorCount = markers.filter((m: any) => m.severity === monacoInstance.MarkerSeverity.Error).length
+              const warningCount = markers.filter((m: any) => m.severity === monacoInstance.MarkerSeverity.Warning).length
+              if (errorCount > 0 || warningCount > 0) {
+                console.log(`语法校验: ${errorCount} 个错误, ${warningCount} 个警告`)
+              }
+            }
+          })
+        })
+      }
     }// 添加自定义快捷键
     if (editor) {
       // 复制快捷键
@@ -217,7 +235,37 @@ defineExpose({
   },
   setValue: (value: string) => editor?.setValue(value),
   focus: () => editor?.focus(),
-  layout: updateEditorLayout
+  layout: updateEditorLayout,
+  // 语法校验相关方法
+  getMarkers: () => {
+    const model = editor?.getModel()
+    if (model && monaco) {
+      return monaco.editor.getModelMarkers({ resource: model.uri })
+    }
+    return []
+  },
+  clearMarkers: () => {
+    const model = editor?.getModel()
+    if (model && monaco) {
+      monaco.editor.setModelMarkers(model, 'c-language', [])
+    }
+  },
+  getErrorCount: () => {
+    const model = editor?.getModel()
+    if (model && monaco) {
+      const markers = monaco.editor.getModelMarkers({ resource: model.uri })
+      return markers.filter((m: any) => m.severity === monaco.MarkerSeverity.Error).length
+    }
+    return 0
+  },
+  getWarningCount: () => {
+    const model = editor?.getModel()
+    if (model && monaco) {
+      const markers = monaco.editor.getModelMarkers({ resource: model.uri })
+      return markers.filter((m: any) => m.severity === monaco.MarkerSeverity.Warning).length
+    }
+    return 0
+  }
 })
 </script>
 

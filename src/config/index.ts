@@ -1,6 +1,7 @@
 import * as monaco from 'monaco-editor'
 import { registerCLanguageSyntax } from './c-language-syntax'
 import { registerCLanguageCompletion } from './c-language-completion'
+import { registerCLanguageValidation } from './c-language-validation'
 
 /**
  * Monaco Editor C 语言配置
@@ -14,14 +15,15 @@ export class CLanguageConfig {
   static async initialize(monacoInstance: typeof monaco) {
     if (this.initialized) {
       return
-    }
-
-    try {
+    }    try {
       // 注册语法高亮
       registerCLanguageSyntax(monacoInstance)
       
       // 注册代码补全
       registerCLanguageCompletion(monacoInstance)
+      
+      // 注册语法校验
+      registerCLanguageValidation(monacoInstance)
       
       this.initialized = true
       console.log('C 语言配置初始化完成')
