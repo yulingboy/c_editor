@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试 toRaw 修复</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .test-description {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .test-code {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            border-left: 4px solid #007acc;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vue3 + Monaco Editor getValue() 卡死问题修复测试</h1>
+        
+        <div class="test-section">
+            <div class="test-title">问题描述</div>
+            <div class="test-description">
+                在Vue3环境中使用Monaco Editor时，调用editor.getValue()或model.getValue()方法会导致页面卡死。
+                这是由于Vue3的响应式系统与Monaco Editor的交互引起的。
+            </div>
+            <div class="status info">
+                <strong>参考文章：</strong> <a href="https://blog.csdn.net/weixin_43977534/article/details/122365734" target="_blank">vue3使用monaco editor踩坑记——getValue()导致页面卡住</a>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">解决方案</div>
+            <div class="test-description">
+                使用Vue3的toRaw()方法获取原始对象，避免响应式系统的干扰。
+            </div>
+            <div class="test-code">// 错误的做法 - 会导致卡死
+const currentCode = model.getValue()
+
+// 正确的做法 - 使用toRaw
+import { toRaw } from 'vue'
+const rawModel = toRaw(model)
+const currentCode = rawModel.getValue()</div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">修复的位置</div>
+            <div class="test-description">
+                我们在以下文件中应用了toRaw修复：
+            </div>
+            <div class="test-code">1. MonacoEditor.vue
+   - 内容变化监听：emit('change', toRaw(model).getValue())
+   - 复制功能：toRaw(model).getValue()
+   - 格式化功能：toRaw(model).getValue()
+   - 值监听：toRaw(model).getValue()
+   - 暴露方法：toRaw(model).getValue()
+
+2. App.vue
+   - 复制功能：toRaw(model).getValueInRange(selection)
+   - 格式化功能：toRaw(model).getValue() 和 toRaw(model).getValueInRange(selection)</div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">测试步骤</div>
+            <div class="test-description">
+                请在主应用中进行以下测试：
+            </div>
+            <div class="test-code">1. 在编辑器中输入一些C代码
+2. 尝试使用Ctrl+Alt+C复制代码
+3. 尝试使用Ctrl+Alt+F格式化代码
+4. 点击复制按钮和格式化按钮
+5. 确认页面不会卡死，功能正常工作</div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">预期结果</div>
+            <div class="test-description">
+                修复后的应用应该：
+            </div>
+            <div class="status success">
+                ✓ 页面不再卡死<br>
+                ✓ 复制功能正常工作<br>
+                ✓ 格式化功能正常工作<br>
+                ✓ 快捷键响应正常<br>
+                ✓ 控制台没有错误信息<br>
+                ✓ UI响应流畅
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">技术原理</div>
+            <div class="test-description">
+                toRaw()的作用是获取响应式对象的原始版本，这样就避免了Vue3响应式系统的跟踪，
+                防止了与Monaco Editor内部机制的冲突。
+            </div>
+            <div class="test-code">// Vue3响应式系统
+const reactiveModel = reactive(model) // 被Vue跟踪
+const currentCode = reactiveModel.getValue() // 可能导致卡死
+
+// 使用toRaw获取原始对象
+const rawModel = toRaw(reactiveModel) // 不被Vue跟踪
+const currentCode = rawModel.getValue() // 安全调用</div>
+        </div>
+    </div>
+
+    <script>
+        // 测试页面加载
+        console.log('toRaw修复测试页面加载完成');
+        console.log('请在主应用(http://localhost:5173)中测试功能');
+        
+        // 添加一些交互
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusElements = document.querySelectorAll('.status.success');
+            statusElements.forEach(element => {
+                element.addEventListener('click', function() {
+                    this.style.backgroundColor = '#c3e6cb';
+                    setTimeout(() => {
+                        this.style.backgroundColor = '#d4edda';
+                    }, 200);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
